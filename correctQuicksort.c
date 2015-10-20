@@ -64,7 +64,7 @@ void main(int argc, char *argv[])
 	{
 		int commRank;
 		MPI_Comm_rank(communicators[i], &commRank);
-		printf("My rank is %d.  For communicator %d, my rank is %d.\n",iproc,i,commRank);
+		//printf("My rank is %d.  For communicator %d, my rank is %d.\n",iproc,i,commRank);
 	}
 
 	//quickSort( numberCollection, 0, 8);
