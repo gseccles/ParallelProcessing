@@ -64,7 +64,7 @@ void main(int argc, char *argv[])
 	}
 
 	//quickSort( numberCollection, 0, 8);
-
+	MPI_Finalize();
 	
 }
 

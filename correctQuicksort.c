@@ -46,10 +46,12 @@ void main(int argc, char *argv[])
 		int commSplitMask;
 		commSplitMask = (int)pow(2,numDim);
 
+
 		int color;
 		if(iproc & commSplitMask == 0)
 			color = 0;
 		else color = 1;
+		printf("My rank is %d.  For communicator %d, my color is %d.\n",iproc,i,color);
 		MPI_Comm newComm;
 		MPI_Comm_split(currentComm, color, iproc, &newComm);
 		communicators[count] = newComm;
