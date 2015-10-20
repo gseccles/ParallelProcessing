@@ -51,10 +51,10 @@ void main(int argc, char *argv[])
 
 		int color;
 		int bitwiseResult = commRank & commSplitMask;
-		if(commRank & commSplitMask == 0)
+		if(bitwiseResult == 0)
 			color = 0;
 		else color = 1;
-		printf("My rank is %d.  For communicator %d, the Mask is %d, my rank is %d, and my result is is %d.\n",iproc,count,commSplitMask,commRank,bitwiseResult);
+		printf("My rank is %d.  For communicator %d, the Mask is %d, my rank is %d, my result is %d, and my color is %d.\n",iproc,count,commSplitMask,commRank,bitwiseResult, color);
 		MPI_Comm newComm;
 		MPI_Comm_split(currentComm, color, iproc, &newComm);
 		communicators[count] = newComm;
