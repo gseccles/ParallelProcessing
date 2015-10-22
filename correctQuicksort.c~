@@ -8,11 +8,13 @@
 #define VECSIZE 1000
 #define MAXVALUE 1000
 
+typedef enum { false, true } bool;
+
 void quickSort( int[], int, int);
 int partition( int[], int, int);
-void parallelPartition( int[], int, int);
+int parallelPartition( int[], int, int, int);
 int findPivot(int[], MPI_Comm, int);
-void sendCollection(int[] int, MPI_Comm,int*)
+int* sendCollection(int[], int, MPI_Comm,int*, bool);
 
 double When()
 {
@@ -73,12 +75,21 @@ void main(int argc, char *argv[])
 	
 	for(count = 0; count<numDim; count++)
 	{
-		int pivot = findPivot(numberCollection, communicators[count], collectionSize);
-		int pivotLocation = parallelPartition(collectionPointer, 0, collectionSize-1, pivot);
-		sendCollection(numberCollection, pivotLocation, communicators[count], sizePointer);
+		int pivot = findPivot(numberCollection, communicators[count], *sizePointer);
+		int pivotLocation = parallelPartition(collectionPointer, 0, *sizePointer-1, pivot);
+		int currentRank;
+		MPI_Comm_rank(communicators[count], &currentRank);
+		int currentProcesses;
+		MPI_Comm_size(communicators[count], &currentProcesses);
+		bool sendingHigh;
+		if(currentRank >= (currentProcesses/2))
+			sendingHigh = false;
+		else sendingHigh = true;
+		collectionPointer = sendCollection(collectionPointer, pivotLocation, communicators[count], sizePointer, sendingHigh);
 	}
 	
-	//quickSort( numberCollection, 0, 8);
+	quickSort( collectionPointer, 0, *sizePointer);
+
 	MPI_Finalize();
 	
 }
@@ -128,6 +139,7 @@ int originalPartition( int numberCollection[], int l, int r)
    	return j;
 }
 
+
 int parallelPartition( int *numberCollection, int l, int collectionSize, int pivot) 
 {
    	int t;
@@ -139,7 +151,12 @@ int parallelPartition( int *numberCollection, int l, int collectionSize, int piv
 			left++;
 		while( numberCollection[right] > pivot )
 			right--;
-		if( left >= right ) break;
+		if( left >= right ) 
+			{
+				if( left > right )
+					right++;
+				break;
+			}
 	   	t = numberCollection[left];
 		numberCollection[left] = numberCollection[right]; 
 		numberCollection[right] = t;
@@ -147,6 +164,7 @@ int parallelPartition( int *numberCollection, int l, int collectionSize, int piv
    	t = numberCollection[l]; 
 	numberCollection[l] = numberCollection[right]; 
 	numberCollection[right] = t;
+	return right;
 }
 
 
@@ -154,9 +172,10 @@ int findPivot(int numberCollection[], MPI_Comm comm, int collectionSize)
 {
 	int possiblePivots = (int)log2(collectionSize);
 	int pivots[possiblePivots];
+	int i;
 	for(i = 0; i < possiblePivots; i++)
 	{
-		int randNum = rand() % (currentSize);
+		int randNum = rand() % (collectionSize);
 		pivots[i] = numberCollection[randNum];
 	}
 
@@ -167,44 +186,90 @@ int findPivot(int numberCollection[], MPI_Comm comm, int collectionSize)
 	}
 
 	int globalSum;
-	MPI_Allreduce(&localSum, &globalSum, 1, MPI_INT, MPI_SUM, 0, currentComm);
+	MPI_Allreduce(&localSum, &globalSum, 1, MPI_INT, MPI_SUM, comm);
 	int globalPivots;
-	MPI_Allreduce(&possiblePivots, &globalPivots, 1, MPI_INT, MPI_SUM, 0, currentComm);
+	MPI_Allreduce(&possiblePivots, &globalPivots, 1, MPI_INT, MPI_SUM, comm);
 
 	int currentProcessors;
 	MPI_Comm_size(MPI_COMM_WORLD, &currentProcessors);
-	pivot = globalSum/globalPivots;
+	return globalSum/globalPivots;
+	
 }
 
-*int sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *collectionSize)
+int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *collectionSize, bool sendingHigh)
 {
-	int sentCollection[pivotLocation];
-	int i;
-	for(i = 0; i < pivotLocation; i++)
+	int* sentCollection;
+	int sentSize;
+	int count;
+	if(sendingHigh)
 	{
-		sentCollection[i] = collection[i];
+		sentSize = *collectionSize-pivotLocation;
+		int sentArray[sentSize];
+		for(count = 0; count < sentSize; count++)
+		{
+			sentArray[count] = collection[count + pivotLocation];
+		}
+		sentCollection = sentArray;
 	}
+	else
+	{
+		int sentArray[pivotLocation];
+		sentSize = pivotLocation;
+		for(count = 0; count < pivotLocation; count++)
+		{
+			sentArray[count] = collection[count];
+		}
+		sentCollection = sentArray;
+	}
+	
+	int currentRank;
+	MPI_Comm_rank(comm, &currentRank);
+	int msg_dest;
+	int currentProcesses;
+	MPI_Comm_size(comm, &currentProcesses);
+	if(sendingHigh)
+		msg_dest = currentRank + currentProcesses/2;
+	else msg_dest = currentRank - currentProcesses/2;
 
-	MPI_Send(&i, 1, MPI_INT, msg_dest, 0, MPI_COMM_WORLD);
+	MPI_Send(&sentSize, 1, MPI_INT, msg_dest, 0, comm);
 	
 	int sizeReceiving;
-	MPI_Recv(&sizeReceiving, 1, MPI_INT, msg_dest, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	MPI_Recv(&sizeReceiving, 1, MPI_INT, msg_dest, 0, comm, MPI_STATUS_IGNORE);
 	
-	MPI_SEND(&sentCollection, i, MPI_FLOAT, msg_dest, 0, MPI_COMM_WORLD);
+	MPI_SEND(&sentCollection, sentSize, MPI_FLOAT, msg_dest, 0, comm);
 
-	int receivedNumbers[*collectionSize];
-	MPI_Recv(&receivedNumbers, sizeReceiving, MPI_FLOAT, msg_dest, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	int receivedNumbers[sizeReceiving];
+	MPI_Recv(&receivedNumbers, sizeReceiving, MPI_FLOAT, msg_dest, 0, comm, MPI_STATUS_IGNORE);
 	
-	*collectionSize -= i;
+	*collectionSize -= sentSize;
 	*collectionSize += sizeReceiving;
 
-	int *newCollection = new int[*collectionSize];
-	int count;
-	bool receivingLowNumbers;
-	if(receivedNumbers[0] < collection[i])
-		recevingLowNumbers = true;
-	else receivingLowNumbers = false;
-	for(count = 0; count < 
+	int *newCollectionPtr;
+	int newCollection[*collectionSize];
+	if(receivingHigh)
+	{
+		for(count = 0; count < pivotLocation; count++)
+		{
+			newCollection[count] = collection[count];
+		}
+		for(count = 0; count < sizeReceiving; count++)
+		{
+			newCollection[count + pivotLocation] = receivedNumbers[count];
+		}
+	}
+	else
+	{
+		for(count = 0; count < sizeReceiving; count++)
+		{
+			newCollection[count] = receivedNumbers[count];
+		}
+		for(count = 0; count < pivotLocation; count++)
+		{
+			newCollection[count + sizeReceiving] = collection[count];
+		}
+	}
+	newCollectionPtr = newCollection;
+	return newCollectionPtr;
 }
 
 

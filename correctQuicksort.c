@@ -8,11 +8,13 @@
 #define VECSIZE 1000
 #define MAXVALUE 1000
 
+typedef enum { false, true } bool;
+
 void quickSort( int[], int, int);
 int partition( int[], int, int);
-void parallelPartition( int[], int, int);
+int parallelPartition( int[], int, int, int);
 int findPivot(int[], MPI_Comm, int);
-void sendCollection(int[] int, MPI_Comm,int*)
+int* sendCollection(int[], int, MPI_Comm,int*, bool);
 
 double When()
 {
@@ -73,12 +75,20 @@ void main(int argc, char *argv[])
 	
 	for(count = 0; count<numDim; count++)
 	{
-		int pivot = findPivot(numberCollection, communicators[count], collectionSize);
-		int pivotLocation = parallelPartition(collectionPointer, 0, collectionSize-1, pivot);
-		collectionPointer = sendCollection(collectionPointer, pivotLocation, communicators[count], sizePointer);
+		int pivot = findPivot(numberCollection, communicators[count], *sizePointer);
+		int pivotLocation = parallelPartition(collectionPointer, 0, *sizePointer-1, pivot);
+		int currentRank;
+		MPI_Comm_rank(communicators[count], &currentRank);
+		int currentProcesses;
+		MPI_Comm_size(communicators[count], &currentProcesses);
+		bool sendingHigh;
+		if(currentRank >= (currentProcesses/2))
+			sendingHigh = false;
+		else sendingHigh = true;
+		collectionPointer = sendCollection(collectionPointer, pivotLocation, communicators[count], sizePointer, sendingHigh);
 	}
 	
-	quickSort( collectionPointer, 0, *collectionSize);
+	quickSort( collectionPointer, 0, *sizePointer);
 
 	MPI_Finalize();
 	
@@ -162,9 +172,10 @@ int findPivot(int numberCollection[], MPI_Comm comm, int collectionSize)
 {
 	int possiblePivots = (int)log2(collectionSize);
 	int pivots[possiblePivots];
+	int i;
 	for(i = 0; i < possiblePivots; i++)
 	{
-		int randNum = rand() % (currentSize);
+		int randNum = rand() % (collectionSize);
 		pivots[i] = numberCollection[randNum];
 	}
 
@@ -175,23 +186,24 @@ int findPivot(int numberCollection[], MPI_Comm comm, int collectionSize)
 	}
 
 	int globalSum;
-	MPI_Allreduce(&localSum, &globalSum, 1, MPI_INT, MPI_SUM, 0, currentComm);
+	MPI_Allreduce(&localSum, &globalSum, 1, MPI_INT, MPI_SUM, comm);
 	int globalPivots;
-	MPI_Allreduce(&possiblePivots, &globalPivots, 1, MPI_INT, MPI_SUM, 0, currentComm);
+	MPI_Allreduce(&possiblePivots, &globalPivots, 1, MPI_INT, MPI_SUM, comm);
 
 	int currentProcessors;
 	MPI_Comm_size(MPI_COMM_WORLD, &currentProcessors);
-	pivot = globalSum/globalPivots;
+	return globalSum/globalPivots;
+	
 }
 
-*int sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *collectionSize, bool sendingHigh)
+int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *collectionSize, bool sendingHigh)
 {
 	int* sentCollection;
 	int sentSize;
 	int count;
 	if(sendingHigh)
 	{
-		sentSize = *collectionSize-pivotLocation
+		sentSize = *collectionSize-pivotLocation;
 		int sentArray[sentSize];
 		for(count = 0; count < sentSize; count++)
 		{
@@ -210,6 +222,14 @@ int findPivot(int numberCollection[], MPI_Comm comm, int collectionSize)
 		sentCollection = sentArray;
 	}
 	
+	int currentRank;
+	MPI_Comm_rank(comm, &currentRank);
+	int msg_dest;
+	int currentProcesses;
+	MPI_Comm_size(comm, &currentProcesses);
+	if(sendingHigh)
+		msg_dest = currentRank + currentProcesses/2;
+	else msg_dest = currentRank - currentProcesses/2;
 
 	MPI_Send(&sentSize, 1, MPI_INT, msg_dest, 0, comm);
 	
@@ -221,12 +241,12 @@ int findPivot(int numberCollection[], MPI_Comm comm, int collectionSize)
 	int receivedNumbers[sizeReceiving];
 	MPI_Recv(&receivedNumbers, sizeReceiving, MPI_FLOAT, msg_dest, 0, comm, MPI_STATUS_IGNORE);
 	
-	*collectionSize -= sizeSent;
+	*collectionSize -= sentSize;
 	*collectionSize += sizeReceiving;
 
 	int *newCollectionPtr;
 	int newCollection[*collectionSize];
-	if(receivingHigh)
+	if(sendingHigh)
 	{
 		for(count = 0; count < pivotLocation; count++)
 		{
