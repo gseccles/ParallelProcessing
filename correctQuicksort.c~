@@ -49,6 +49,11 @@ void main(int argc, char *argv[])
 	int numDim = log2(nproc);
 
 	int count;
+	
+	for(count = 0; count < VECSIZE; count++)
+	{
+		fprintf(stderr,"My rank is %d. Number[%d] == %d\n",iproc, count, numberCollection[count]);
+	}	
 
 	for(count=0;count<log2(nproc);count++)
 	{
