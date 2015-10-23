@@ -99,6 +99,13 @@ void main(int argc, char *argv[])
 	}
 	fprintf(stderr,"Rank %d partitioned and traded numbers\n", iproc);
 	fprintf(stderr,"Presort, My rank is %d and my size is %d\n",iproc, *sizePointer);	
+	if(iproc == 1)
+	{
+		for(count = 0; count < *sizePointer; count++)
+		{
+			printf("My rank is %d. Number[%d] == %d\n",iproc, count, collectionPointer[count]);
+		}	
+	}
 	quickSort( collectionPointer, 0, *sizePointer);
 	fprintf(stderr,"Rank %d sorted its list\n",iproc);
 
