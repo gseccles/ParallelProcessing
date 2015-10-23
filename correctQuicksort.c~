@@ -7,7 +7,7 @@
 #include <string.h>
 
 
-#define VECSIZE 20
+#define VECSIZE 200
 #define MAXVALUE 1000
 
 typedef enum { false, true } bool;
