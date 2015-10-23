@@ -232,6 +232,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	fprintf(stderr,"My rank is %d. pivotLocation = %d\n",iproc, pivotLocation); 
 	if(sendingHigh)
 	{
+		fprintf(stderr,"Rank %d is sending high\n", iproc);
 		sentSize = *collectionSize-pivotLocation;
 		int sentArray[sentSize];
 		for(count = 0; count < sentSize; count++)
@@ -242,6 +243,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	}
 	else
 	{
+		fprintf(stderr,"Rank %d is sending low\n", iproc);
 		int sentArray[pivotLocation];
 		sentSize = pivotLocation;
 		for(count = 0; count < pivotLocation; count++)
