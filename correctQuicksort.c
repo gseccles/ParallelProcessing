@@ -191,6 +191,10 @@ int parallelPartition( int *numberCollection, int l, int collectionSize, int piv
 	numberCollection[l] = numberCollection[right]; 
 	numberCollection[right] = t;
 	fprintf(stderr,"Rank %d, pivotLocation is %d\n", iproc, right);
+	for(count = 0; count < collectionSize; count++)
+	{
+		printf("My rank is %d. Post-Partition numberCollection[%d] = %d\n",iproc, count, numberCollection[count]);
+	}
 	return right;
 }
 
