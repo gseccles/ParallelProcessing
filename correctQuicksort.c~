@@ -221,10 +221,11 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	int count;
 	int iproc;
 	MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
-	for(count = 0; count < sentSize; count++)
+	for(count = 0; count < *collectionSize; count++)
 	{
-		printf("My rank is %d. sentArray[%d] = %d\n",iproc, count, sentCollection[count]);
-	}	
+		printf("My rank is %d. collection[%d] = %d\n",iproc, count, collection[count]);
+	}
+	fprintf(stderr,"My rank is %d. pivotLocation = %d\n",iproc, pivotLocation); 
 	if(sendingHigh)
 	{
 		sentSize = *collectionSize-pivotLocation;

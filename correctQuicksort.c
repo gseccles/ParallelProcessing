@@ -224,7 +224,8 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	for(count = 0; count < *collectionSize; count++)
 	{
 		printf("My rank is %d. collection[%d] = %d\n",iproc, count, collection[count]);
-	}	
+	}
+	fprintf(stderr,"My rank is %d. pivotLocation = %d\n",iproc, pivotLocation); 
 	if(sendingHigh)
 	{
 		sentSize = *collectionSize-pivotLocation;
