@@ -4,8 +4,10 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
-#define VECSIZE 1000
+
+#define VECSIZE 20
 #define MAXVALUE 1000
 
 typedef enum { false, true } bool;
@@ -90,6 +92,11 @@ void main(int argc, char *argv[])
 	
 	quickSort( collectionPointer, 0, *sizePointer);
 
+	for(count = 0; count < *sizePointer; count++)
+	{
+		printf("My rank is %d. Number[%d] == %d",iproc, count, collectionPointer[count]);
+	}	
+
 	MPI_Finalize();
 	
 }
@@ -123,17 +130,17 @@ int originalPartition( int numberCollection[], int l, int r)
 			++i;
 		while( numberCollection[j] > pivot )
 		{
-			printf("j = %d\n",j);
-			printf("numberCollection[j] = %d\n", numberCollection[j]);
+			//printf("j = %d\n",j);
+			//printf("numberCollection[j] = %d\n", numberCollection[j]);
 			--j;
 		}
 		if( i >= j ) break;
 	   	t = numberCollection[i]; numberCollection[i] = numberCollection[j]; numberCollection[j] = t;
-		printf("Current array is:  ");
+		//printf("Current array is:  ");
 		for(i = 0; i < 9; ++i)
-			printf(" %d ", numberCollection[i]);
-		printf("\n");
-		printf("j = %d\n",j);
+			//printf(" %d ", numberCollection[i]);
+		//printf("\n");
+		//printf("j = %d\n",j);
    	}
    	t = numberCollection[l]; numberCollection[l] = numberCollection[j]; numberCollection[j] = t;
    	return j;
@@ -236,7 +243,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	int sizeReceiving;
 	MPI_Recv(&sizeReceiving, 1, MPI_INT, msg_dest, 0, comm, MPI_STATUS_IGNORE);
 	
-	MPI_SEND(&sentCollection, sentSize, MPI_FLOAT, msg_dest, 0, comm);
+	MPI_Send(&sentCollection, sentSize, MPI_FLOAT, msg_dest, 0, comm);
 
 	int receivedNumbers[sizeReceiving];
 	MPI_Recv(&receivedNumbers, sizeReceiving, MPI_FLOAT, msg_dest, 0, comm, MPI_STATUS_IGNORE);
