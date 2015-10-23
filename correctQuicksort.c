@@ -252,7 +252,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 		{
 			sentArray[count] = collection[count];
 		}
-		sentCollection = sentArray;
+		sentCollection = &sentArray[0];
 	}
 	
 
