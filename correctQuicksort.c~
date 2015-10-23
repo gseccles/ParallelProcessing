@@ -92,7 +92,7 @@ void main(int argc, char *argv[])
 	
 	quickSort( collectionPointer, 0, *sizePointer);
 
-	printf("My rank is %d and my size is %d",iproc, *sizePointer);	
+	printf("My rank is %d and my size is %d\n",iproc, *sizePointer);	
 
 	//for(count = 0; count < *sizePointer; count++)
 	//{
