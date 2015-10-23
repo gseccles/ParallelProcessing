@@ -219,6 +219,12 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	int* sentCollection;
 	int sentSize;
 	int count;
+	int iproc;
+	MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
+	for(count = 0; count < sentSize; count++)
+	{
+		printf("My rank is %d. sentArray[%d] = %d\n",iproc, count, sentCollection[count]);
+	}	
 	if(sendingHigh)
 	{
 		sentSize = *collectionSize-pivotLocation;
@@ -245,7 +251,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	MPI_Comm_rank(comm, &currentRank);
 	for(count = 0; count < sentSize; count++)
 	{
-		printf("My rank is %d. sentArray[%d] = %d\n",currentRank, count, sentArray[count]);
+		printf("My rank is %d. sentArray[%d] = %d\n",currentRank, count, sentCollection[count]);
 	}	
 	int msg_dest;
 	int currentProcesses;
