@@ -50,7 +50,7 @@ void main(int argc, char *argv[])
 
 	int count;
 	
-	fprintf(stderr,"Rank %d generated list", iproc);
+	fprintf(stderr,"Rank %d generated list\n", iproc);
 	//for(count = 0; count < VECSIZE; count++)
 	//{
 	//	fprintf(stderr,"My rank is %d. Number[%d] == %d\n",iproc, count, numberCollection[count]);
@@ -77,7 +77,7 @@ void main(int argc, char *argv[])
 		numDim -= 1;
 	}
 	
-	fprintf(stderr,"Rank %d created communicators",iproc);
+	fprintf(stderr,"Rank %d created communicators\n",iproc);
 
 	numDim = log2(nproc);
 	int collectionSize = VECSIZE;
@@ -97,9 +97,9 @@ void main(int argc, char *argv[])
 		else sendingHigh = true;
 		collectionPointer = sendCollection(collectionPointer, pivotLocation, communicators[count], sizePointer, sendingHigh);
 	}
-	fprintf(stderr,"Rank %d partitioned and traded numbers", iproc);
+	fprintf(stderr,"Rank %d partitioned and traded numbers\n", iproc);
 	quickSort( collectionPointer, 0, *sizePointer);
-	fprintf(stderr,"Rank %d sorted its list",iproc);
+	fprintf(stderr,"Rank %d sorted its list\n",iproc);
 	printf("My rank is %d and my size is %d\n",iproc, *sizePointer);	
 
 	//for(count = 0; count < *sizePointer; count++)
