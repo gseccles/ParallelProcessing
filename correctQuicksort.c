@@ -164,9 +164,13 @@ int parallelPartition( int *numberCollection, int l, int collectionSize, int piv
 	MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
 	fprintf(stderr,"Rank %d, pivot is %d\n", iproc, pivot);
    	int t;
+	for(count = 0; count < *collectionSize; count++)
+	{
+		printf("My rank is %d. Pre-Partition numberCollection[%d] = %d\n",iproc, count, numberCollection[count]);
+	}
 	int left = 0;
 	int right = collectionSize-1;
-   	while( 1)
+   	while(1)
    	{
 		while( numberCollection[left] <= pivot && left <= right )
 			left++;
