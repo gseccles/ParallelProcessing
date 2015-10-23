@@ -237,7 +237,9 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 		int sentArray[sentSize];
 		for(count = 0; count < sentSize; count++)
 		{
-			sentArray[count] = collection[count + pivotLocation];
+			int collectionLocation = count + pivotLocation;
+			fprintf(stderr,"Rank %d. sentArray[%d] assigned collection[%d], which is %d",iproc,count,collectionLocation,collection[collectionLocation]);
+			sentArray[count] = collection[collectionLocation];
 		}
 		sentCollection = sentArray;
 	}
