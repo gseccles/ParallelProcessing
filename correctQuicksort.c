@@ -51,10 +51,10 @@ void main(int argc, char *argv[])
 	int count;
 	
 	fprintf(stderr,"Rank %d generated list\n", iproc);
-	for(count = 0; count < VECSIZE; count++)
-	{
-		fprintf(stderr,"My rank is %d. Number[%d] == %d\n",iproc, count, numberCollection[count]);
-	}	
+	//for(count = 0; count < VECSIZE; count++)
+	//{
+	//	fprintf(stderr,"My rank is %d. Number[%d] == %d\n",iproc, count, numberCollection[count]);
+	//}	
 
 
 	for(count=0;count<log2(nproc);count++)
@@ -221,10 +221,10 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	int count;
 	int iproc;
 	MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
-	for(count = 0; count < *collectionSize; count++)
-	{
-		printf("My rank is %d. collection[%d] = %d\n",iproc, count, collection[count]);
-	}
+	//for(count = 0; count < *collectionSize; count++)
+	//{
+	//	printf("My rank is %d. collection[%d] = %d\n",iproc, count, collection[count]);
+	//}
 	fprintf(stderr,"My rank is %d. pivotLocation = %d\n",iproc, pivotLocation); 
 	if(sendingHigh)
 	{
