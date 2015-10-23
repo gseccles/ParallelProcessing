@@ -56,7 +56,6 @@ void main(int argc, char *argv[])
 		fprintf(stderr,"My rank is %d. Number[%d] == %d\n",iproc, count, numberCollection[count]);
 	}	
 
-	fprintf(stderr,numbers);
 
 	for(count=0;count<log2(nproc);count++)
 	{
