@@ -251,6 +251,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 		fprintf(stderr,"Rank %d is sending low and sending %d numbers\n", iproc, sentSize);
 		for(count = 0; count < pivotLocation; count++)
 		{
+			fprintf(stderr,"Rank %d. sentArray[%d] assigned collection[%d], which is %d\n",iproc,count,count,collection[count]);
 			sentArray[count] = collection[count];
 		}
 	}
