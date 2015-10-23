@@ -229,30 +229,30 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	//{
 	//	printf("My rank is %d. collection[%d] = %d\n",iproc, count, collection[count]);
 	//}
+	if(sendingHigh)
+		sentSize = *collectionSize-pivotLocation;
+	else
+		sentSize = pivotLocation;
+	int sentArray[sentSize];
 	fprintf(stderr,"My rank is %d. pivotLocation = %d\n",iproc, pivotLocation); 
 	if(sendingHigh)
 	{
-		sentSize = *collectionSize-pivotLocation;
 		fprintf(stderr,"Rank %d is sending high and sending %d numbers\n", iproc, sentSize);
-		int sentArray[sentSize];
 		for(count = 0; count < sentSize; count++)
 		{
 			int collectionLocation = count + pivotLocation;
-			fprintf(stderr,"Rank %d. sentArray[%d] assigned collection[%d], which is %d\n",iproc,count,collectionLocation,collection[collectionLocation]);
+			fprintf(stderr,"Rank %d. sentArray[%d] assigned collection[%d], which is %d \n",iproc,count,collectionLocation,collection[collectionLocation]);
 			sentArray[count] = collection[collectionLocation];
 		}
-		sentCollection = sentArray;
 	}
 	else
 	{
 		int sentArray[pivotLocation];
-		sentSize = pivotLocation;
 		fprintf(stderr,"Rank %d is sending low and sending %d numbers\n", iproc, sentSize);
 		for(count = 0; count < pivotLocation; count++)
 		{
 			sentArray[count] = collection[count];
 		}
-		sentCollection = sentArray;
 	}
 	
 
@@ -274,7 +274,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 	int sizeReceiving;
 	MPI_Recv(&sizeReceiving, 1, MPI_INT, msg_dest, 0, comm, MPI_STATUS_IGNORE);
 	
-	MPI_Send(&sentCollection, sentSize, MPI_FLOAT, msg_dest, 0, comm);
+	MPI_Send(&sentArray, sentSize, MPI_FLOAT, msg_dest, 0, comm);
 
 	int receivedNumbers[sizeReceiving];
 	MPI_Recv(&receivedNumbers, sizeReceiving, MPI_FLOAT, msg_dest, 0, comm, MPI_STATUS_IGNORE);
