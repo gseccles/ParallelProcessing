@@ -183,6 +183,7 @@ int parallelPartition( int *numberCollection, int l, int collectionSize, int piv
 					right++;
 				break;
 			}
+		printf("My rank is %d. swapping numberCollection[%d](%d) and numberCollection[%d](%d)\n",iproc, left, numberCollection[left],right,numberCollection[right]);
 	   	t = numberCollection[left];
 		numberCollection[left] = numberCollection[right]; 
 		numberCollection[right] = t;
