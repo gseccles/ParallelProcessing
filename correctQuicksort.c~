@@ -246,7 +246,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 
 	int *newCollectionPtr;
 	int newCollection[*collectionSize];
-	if(receivingHigh)
+	if(sendingHigh)
 	{
 		for(count = 0; count < pivotLocation; count++)
 		{
