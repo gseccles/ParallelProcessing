@@ -97,9 +97,9 @@ void main(int argc, char *argv[])
 		else sendingHigh = true;
 		collectionPointer = sendCollection(collectionPointer, pivotLocation, communicators[count], sizePointer, sendingHigh);
 	}
-	fprintf("Rank %d partitioned and traded numbers" iproc);
+	fprintf(stderr,"Rank %d partitioned and traded numbers", iproc);
 	quickSort( collectionPointer, 0, *sizePointer);
-	fprintf("Rank %d sorted its list",iproc);
+	fprintf(stderr,"Rank %d sorted its list",iproc);
 	printf("My rank is %d and my size is %d\n",iproc, *sizePointer);	
 
 	//for(count = 0; count < *sizePointer; count++)
