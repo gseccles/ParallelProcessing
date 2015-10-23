@@ -92,10 +92,12 @@ void main(int argc, char *argv[])
 	
 	quickSort( collectionPointer, 0, *sizePointer);
 
-	for(count = 0; count < *sizePointer; count++)
-	{
-		printf("My rank is %d. Number[%d] == %d\n",iproc, count, collectionPointer[count]);
-	}	
+	printf("My rank is %d and my size is %d",iproc, *sizePointer);	
+
+	//for(count = 0; count < *sizePointer; count++)
+	//{
+	//	printf("My rank is %d. Number[%d] == %d\n",iproc, count, collectionPointer[count]);
+	//}	
 
 	MPI_Finalize();
 	
