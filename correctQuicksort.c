@@ -7,7 +7,7 @@
 #include <string.h>
 
 
-#define VECSIZE 200
+#define VECSIZE 20
 #define MAXVALUE 1000
 
 typedef enum { false, true } bool;
@@ -51,10 +51,11 @@ void main(int argc, char *argv[])
 	int count;
 	
 	fprintf(stderr,"Rank %d generated list\n", iproc);
-	//for(count = 0; count < VECSIZE; count++)
-	//{
-	//	fprintf(stderr,"My rank is %d. Number[%d] == %d\n",iproc, count, numberCollection[count]);
-	//}	
+	for(count = 0; count < VECSIZE; count++)
+	{
+		fprintf(stderr,"My rank is %d. Number[%d] == %d\n",iproc, count, numberCollection[count]);
+	}	
+
 
 	for(count=0;count<log2(nproc);count++)
 	{
@@ -103,7 +104,7 @@ void main(int argc, char *argv[])
 	{
 		for(count = 0; count < *sizePointer; count++)
 		{
-			printf("My rank is %d. Number[%d] == %d\n",iproc, count, collectionPointer[count]);
+			printf("My rank is %d. Number[%d] = %d\n",iproc, count, collectionPointer[count]);
 		}	
 	}
 	quickSort( collectionPointer, 0, *sizePointer);
