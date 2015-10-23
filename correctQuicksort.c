@@ -240,13 +240,13 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 		sentCollection = sentArray;
 	}
 	
-	for(count = 0; count < sentSize; count++)
-	{
-		printf("My rank is %d. sentArray[%d] = %d\n",iproc, count, sentArray[count]);
-	}	
 
 	int currentRank;
 	MPI_Comm_rank(comm, &currentRank);
+	for(count = 0; count < sentSize; count++)
+	{
+		printf("My rank is %d. sentArray[%d] = %d\n",currentRank, count, sentArray[count]);
+	}	
 	int msg_dest;
 	int currentProcesses;
 	MPI_Comm_size(comm, &currentProcesses);

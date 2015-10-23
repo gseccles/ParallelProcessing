@@ -148,17 +148,10 @@ int originalPartition( int numberCollection[], int l, int r)
 			++i;
 		while( numberCollection[j] > pivot )
 		{
-			//printf("j = %d\n",j);
-			//printf("numberCollection[j] = %d\n", numberCollection[j]);
 			--j;
 		}
 		if( i >= j ) break;
 	   	t = numberCollection[i]; numberCollection[i] = numberCollection[j]; numberCollection[j] = t;
-		//printf("Current array is:  ");
-		//for(i = 0; i < 9; ++i)
-			//printf(" %d ", numberCollection[i]);
-		//printf("\n");
-		//printf("j = %d\n",j);
    	}
    	t = numberCollection[l]; numberCollection[l] = numberCollection[j]; numberCollection[j] = t;
    	return j;
@@ -247,6 +240,11 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 		sentCollection = sentArray;
 	}
 	
+	for(count = 0; count < sentSize; count++)
+	{
+		printf("My rank is %d. sentArray[%d] = %d\n",iproc, count, sentArray[count]);
+	}	
+
 	int currentRank;
 	MPI_Comm_rank(comm, &currentRank);
 	int msg_dest;
