@@ -92,10 +92,12 @@ void main(int argc, char *argv[])
 	
 	quickSort( collectionPointer, 0, *sizePointer);
 
-	for(count = 0; count < *sizePointer; count++)
-	{
-		printf("My rank is %d. Number[%d] == %d",iproc, count, collectionPointer[count]);
-	}	
+	printf("My rank is %d and my size is %d",iproc, *sizePointer);	
+
+	//for(count = 0; count < *sizePointer; count++)
+	//{
+	//	printf("My rank is %d. Number[%d] == %d\n",iproc, count, collectionPointer[count]);
+	//}	
 
 	MPI_Finalize();
 	
@@ -137,7 +139,7 @@ int originalPartition( int numberCollection[], int l, int r)
 		if( i >= j ) break;
 	   	t = numberCollection[i]; numberCollection[i] = numberCollection[j]; numberCollection[j] = t;
 		//printf("Current array is:  ");
-		for(i = 0; i < 9; ++i)
+		//for(i = 0; i < 9; ++i)
 			//printf(" %d ", numberCollection[i]);
 		//printf("\n");
 		//printf("j = %d\n",j);
