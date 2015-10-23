@@ -220,7 +220,7 @@ int findPivot(int numberCollection[], MPI_Comm comm, int collectionSize)
 
 int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *collectionSize, bool sendingHigh)
 {
-	int* sentCollection;
+	int *sentCollection;
 	int sentSize;
 	int count;
 	int iproc;
@@ -241,7 +241,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 			fprintf(stderr,"Rank %d. sentArray[%d] assigned collection[%d], which is %d\n",iproc,count,collectionLocation,collection[collectionLocation]);
 			sentArray[count] = collection[collectionLocation];
 		}
-		sentCollection = &sentArray;
+		sentCollection = sentArray;
 	}
 	else
 	{
@@ -252,7 +252,7 @@ int* sendCollection(int collection[], int pivotLocation, MPI_Comm comm, int *col
 		{
 			sentArray[count] = collection[count];
 		}
-		sentCollection = &sentArray;
+		sentCollection = sentArray;
 	}
 	
 
