@@ -160,6 +160,9 @@ int originalPartition( int numberCollection[], int l, int r)
 
 int parallelPartition( int *numberCollection, int l, int collectionSize, int pivot) 
 {
+	int iproc;
+	MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
+	fprintf(stderr,"Rank %d, pivot is %d\n", iproc, pivot);
    	int t;
 	int left = 0;
 	int right = collectionSize-1;
@@ -182,6 +185,7 @@ int parallelPartition( int *numberCollection, int l, int collectionSize, int piv
    	t = numberCollection[l]; 
 	numberCollection[l] = numberCollection[right]; 
 	numberCollection[right] = t;
+	fprintf(stderr,"Rank %d, pivotLocation is %d\n", iproc, right);
 	return right;
 }
 
