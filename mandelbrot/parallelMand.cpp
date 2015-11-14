@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <mpi.h>
+#include <sys/time.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -36,10 +37,10 @@ class State {
             //centerY = 0;
             centerX = -1.186340599860225;
             centerY = -0.303652988644423;
-            zoom = 4000;
-            maxIterations = 1000;
-            w = 12000;
-            h = 12000;
+            zoom = 500;
+            maxIterations = 100;
+            w = 28000;
+            h = 28000;
         }
 };
 
@@ -71,7 +72,7 @@ int hue2rgb(float t){
     return 0;
 }
 
-void writeImage(unsigned char *img, int w, int h) {
+void writeImage(unsigned char *img, int w, int h, int step) {
     long long filesize = 54 + 3*(long long)w*(long long)h;
     unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};
     unsigned char bmpinfoheader[40] = {40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};
@@ -103,44 +104,42 @@ void writeImage(unsigned char *img, int w, int h) {
     fclose(f);
 }
 
-unsigned char *createImage(State state) {
+unsigned char *createImage(State state, int iproc, int nproc) {
     int w = state.w;
     int h = state.h;
 
     if (w > MAX_WIDTH_HEIGHT) w = MAX_WIDTH_HEIGHT;
     if (h > MAX_WIDTH_HEIGHT) h = MAX_WIDTH_HEIGHT;
 
-	int iproc, nproc;
-	MPI_Status status;
-	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-	MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
-
     unsigned char r, g, b;
     unsigned char *img = NULL;
     if (img) free(img);
-	if(iproc == 0){
-		long long size = (long long)w*(long long)h*3;
-		printf("Malloc w %zu, h %zu,  %zu\n",w,h,size);
-		img = (unsigned char *)malloc(size);
-		printf("malloc returned %X\n",img);
-	}
+    int chunkSize = w/nproc;
 
-
-	int chunkSize = w/nproc;
-    double xs[w], ys[h];
-	int locationStart = iproc * chunkSize;
-    for (int px=iproc * chunkSize; px<((iproc + 1) * chunkSize); px++) {
-        xs[px] = (px - w/2)/state.zoom + state.centerX; //-1.183, -.317
+    long long size;
+    if(iproc==0){
+        size = (long long)w*(long long)h*3;
     }
-	for(int i = 0; i < h; i++)
-		ys[i] = 0;
-    for (int py=iproc * chunkSize; py<((iproc + 1) * chunkSize); py++) {
+    else{
+        size = (long long)w*(long long)h*3/nproc;
+    }
+    printf("Malloc w %zu, h %zu,  %zu for processor %d\n",w,h,size,iproc);
+    img = (unsigned char *)malloc(size);
+    printf("malloc returned %X\n",img);
+    double xs[MAX_WIDTH_HEIGHT], ys[MAX_WIDTH_HEIGHT];
+    fprintf(stderr,"Process %d building px and py arrays\n",iproc);
+    for (int px=0; px<w; px++){
+        xs[px] = (px - w/2)/state.zoom + state.centerX;
+    }
+	//for(int i = 0; i < h; i++)
+	//	ys[i] = 0;
+    for (int py=0; py<h; py++) {
         ys[py] = (py - h/2)/state.zoom + state.centerY;// -0.3036, -1.196
     }
 	
-	MPI_Allreduce(&ys, &ys, h, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-	
+	//MPI_Allreduce(&ys, &ys, h, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    //fprintf(stderr,"Process %d building portion of image\n",iproc);
+    int imgMemLoc = 0;
     for (int px=iproc * chunkSize; px<((iproc + 1) * chunkSize); px++) {
         for (int py=0; py<h; py++) {
             r = g = b = 0;
@@ -151,34 +150,60 @@ unsigned char *createImage(State state) {
                 g = hue2rgb(h);
                 b = hue2rgb(h + 240);
             }
-            long long loc = ((long long)px+(long long)py*(long long)w)*3;
-            img[loc+2] = (unsigned char)(r);
-            img[loc+1] = (unsigned char)(g);
-            img[loc+0] = (unsigned char)(b);
+            //long long loc = ((long long)px+(long long)py*(long long)w)*3;
+            img[imgMemLoc+2] = (unsigned char)(r);
+            img[imgMemLoc+1] = (unsigned char)(g);
+            img[imgMemLoc+0] = (unsigned char)(b);
+            imgMemLoc += 3;
+        }
+        //fprintf(stderr,"Process %d finished column %d\n", iproc, px);
+    }
+    //fprintf(stderr,"Process %d finished assignment\n", iproc);
+    if(iproc == 0){
+        for(int i = 1; i < nproc; i++){
+            //fprintf(stderr,"Process 0 trying to receive data from %d\n", i);
+            MPI_Recv(&img[i*size/nproc], size/nproc, MPI_UNSIGNED_CHAR,i,1,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+            //writeImage(img, chunkSize*(i+1), chunkSize*(i+1), i);
+            //fprintf(stderr,"Process 0 received data from %d\n", i);
         }
     }
-	
-	MPI_Reduce(&img, &img, w*h*3, MPI_UNSIGNED_CHAR, MPI_MAX, 0, MPI_COMM_WORLD)
-	MPI_Finalize();
+    else {
+        //fprintf(stderr,"Process %d sending data to root\n", iproc);
+        MPI_Send(&img[0],size,MPI_UNSIGNED_CHAR,0,1,MPI_COMM_WORLD);
+        //fprintf(stderr,"Process %d sent data to root\n",iproc);
+    }
+    //MPI_Reduce(&img, &img, w*h*3, MPI_UNSIGNED_CHAR, MPI_MAX, 0, MPI_COMM_WORLD);
     return img;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void draw(State state) {
-    unsigned char *img = createImage(state);
-
-	int iproc, nproc;
-	MPI_Status status;
-	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-	MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
-
-	if(iproc == 0) writeImage(img, state.w, state.h);
-	MPI_Finalize();
+double When()
+{
+        struct timeval tp;
+        gettimeofday(&tp, NULL);
+        return ((double) tp.tv_sec + (double) tp.tv_usec * 1e-6);
 }
 
-int main() {
+void draw(State state, int iproc, int nproc) {
+    double start = When();
+    unsigned char *img = createImage(state, iproc, nproc);
+    double finish = When();
+    
+    if(iproc == 0){
+        printf("Total execution time: %f\n", finish-start);
+        writeImage(img, state.w, state.h, nproc);
+    }
+}
+
+int main(int argc, char *argv[]) {
+    int iproc, nproc;
+    MPI_Status status;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     State state;
-    draw(state);
+    draw(state, iproc, nproc);
+    MPI_Finalize();
 }
+
