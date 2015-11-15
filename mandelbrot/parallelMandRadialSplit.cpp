@@ -15,6 +15,7 @@
 #include <math.h>
 #include <mpi.h>
 #include <sys/time.h>
+#include <numeric>
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -35,12 +36,14 @@ class State {
         State() {
             //centerX = -.75;
             //centerY = 0;
-            centerX = -1.186340599860225;
-            centerY = -0.303652988644423;
-            zoom = 1;
+            //centerX = -1.186340599860225;
+            //centerY = -0.303652988644423;
+            centerX = -0.48781;
+            centerY = 0;
+            zoom = 50;
             maxIterations = 100;
-            w = 24000;
-            h = 24000;
+            w = 6000;
+            h = 6000;
         }
 };
 
@@ -114,15 +117,10 @@ unsigned char *createImage(State state, int iproc, int nproc) {
     unsigned char r, g, b;
     unsigned char *img = NULL;
     if (img) free(img);
-    int chunkSize = w/nproc;
 
     long long size;
-    if(iproc==0){
-        size = (long long)w*(long long)h*3;
-    }
-    else{
-        size = (long long)w*(long long)h*3/nproc;
-    }
+    size = (long long)w*(long long)h*3;
+
     //printf("Malloc w %zu, h %zu,  %zu for processor %d\n",w,h,size,iproc);
     img = (unsigned char *)malloc(size);
     //printf("malloc returned %X\n",img);
@@ -139,30 +137,56 @@ unsigned char *createImage(State state, int iproc, int nproc) {
 	
 	//MPI_Allreduce(&ys, &ys, h, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     //fprintf(stderr,"Process %d building portion of image\n",iproc);
+    double chunkSize = M_PI * 2/nproc;
+    double minAngle = iproc * chunkSize - (M_PI);
+    double maxAngle = minAngle + chunkSize;
+
+    //fprintf(stderr,"Proc %d minAngle: %f maxAngle: %f\n",iproc,minAngle,maxAngle);
     double count = 0;
-    int imgMemLoc = 0;
-    for (int px=iproc * chunkSize; px<((iproc + 1) * chunkSize); px++) {
+    for (int px=0; px<w; px++) {
+        //if(iproc==0)
+            //fprintf(stderr,"px: %d\n",px);
         for (int py=0; py<h; py++) {
-            count += 1;
-            r = g = b = 0;
-            float iterations = iterationsToEscape(xs[px], ys[py], state.maxIterations);
-            if (iterations != -1) {
-                float h = HUE_PER_ITERATION * iterations;
-                r = hue2rgb(h + 120);
-                g = hue2rgb(h);
-                b = hue2rgb(h + 240);
+            //if(px == 3454 && iproc == 0)
+                //fprintf(stderr,"py: %d\n",py);
+            double angle = atan2(ys[py], xs[px]);
+            double dot
+            if(angle >= minAngle && angle < maxAngle){
+                r = g = b = 0;
+                float iterations = iterationsToEscape(xs[px], ys[py], state.maxIterations);
+                if(iterations != -1)
+                    count += iterations;
+                else count += state.maxIterations;
+                if (iterations != -1) {
+                    float h = HUE_PER_ITERATION * iterations;
+                    r = hue2rgb(h + 120);
+                    g = hue2rgb(h);
+                    b = hue2rgb(h + 240);
+                }
+                long long loc = ((long long)px+(long long)py*(long long)w)*3;
+                img[loc+2] = (unsigned char)(r);
+                img[loc+1] = (unsigned char)(g);
+                img[loc+0] = (unsigned char)(b);
             }
-            //long long loc = ((long long)px+(long long)py*(long long)w)*3;
-            img[imgMemLoc+2] = (unsigned char)(r);
-            img[imgMemLoc+1] = (unsigned char)(g);
-            img[imgMemLoc+0] = (unsigned char)(b);
-            imgMemLoc += 3;
+            else{
+                long long loc = ((long long)px+(long long)py*(long long)w)*3;
+                img[loc+2] = (unsigned char)0;
+                img[loc+1] = (unsigned char)0;
+                img[loc+0] = (unsigned char)0;
+            }
         }
-        //fprintf(stderr,"Process %d finished column %d\n", iproc, px);
     }
-    fprintf(stderr,"Calculated %f cells in Proc %d\n",count,iproc);
+    fprintf(stderr,"Calculated %f cells in proc %d\n",count,iproc);
     //fprintf(stderr,"Process %d finished assignment\n", iproc);
-    if(iproc == 0){
+    unsigned char *img2 = NULL;
+    //fprintf(stderr,"Process %d declared img2\n",iproc);
+    if (img2) free(img2);
+    //fprintf(stderr,"Process %d freed img2\n",iproc);
+    img2 = (unsigned char *)malloc(size);
+    //fprintf(stderr,"Process %d allocated space for new image\n",iproc);
+    MPI_Reduce(img,img2,size,MPI_UNSIGNED_CHAR,MPI_MAX,0,MPI_COMM_WORLD);
+    //fprintf(stderr,"Process %d reduced\n",iproc);
+    /*if(iproc == 0){
         for(int i = 1; i < nproc; i++){
             //fprintf(stderr,"Process 0 trying to receive data from %d\n", i);
             MPI_Recv(&img[i*size/nproc], size/nproc, MPI_UNSIGNED_CHAR,i,1,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
@@ -174,9 +198,11 @@ unsigned char *createImage(State state, int iproc, int nproc) {
         //fprintf(stderr,"Process %d sending data to root\n", iproc);
         MPI_Send(&img[0],size,MPI_UNSIGNED_CHAR,0,1,MPI_COMM_WORLD);
         //fprintf(stderr,"Process %d sent data to root\n",iproc);
-    }
+    }*/
     //MPI_Reduce(&img, &img, w*h*3, MPI_UNSIGNED_CHAR, MPI_MAX, 0, MPI_COMM_WORLD);
-    return img;
+    if(iproc==0)
+    	return img2;
+    else return img;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
